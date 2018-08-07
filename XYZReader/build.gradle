@@ -24,5 +24,7 @@ dependencies {
     implementation "com.android.support:support-compat:$androidSupportVersion"
     implementation "com.android.support:recyclerview-v7:$androidSupportVersion"
 
+    implementation 'com.squareup.picasso:picasso:2.5.2'
+
     implementation 'com.squareup.okhttp3:okhttp:3.10.0'
 }
