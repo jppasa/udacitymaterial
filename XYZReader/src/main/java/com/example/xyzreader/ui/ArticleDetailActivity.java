@@ -1,30 +1,47 @@
 package com.example.xyzreader.ui;
 
+import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.LoaderManager;
+import android.support.v4.app.ShareCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.Loader;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.graphics.Palette;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowInsets;
+import android.widget.ImageView;
 
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.data.ItemsContract;
+import com.example.xyzreader.models.ArticleInfo;
+import com.squareup.picasso.Callback;
+import com.squareup.picasso.Picasso;
 
 /**
  * An activity representing a single Article detail screen, letting you swipe between articles.
  */
 public class ArticleDetailActivity extends AppCompatActivity
         implements LoaderManager.LoaderCallbacks<Cursor> {
+
+    public static final String EXTRA_ARTICLE = "extra_article";
+    private ArticleInfo articleInfo;
 
     private Cursor mCursor;
     private long mStartId;
@@ -47,6 +64,18 @@ public class ArticleDetailActivity extends AppCompatActivity
                             View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         }
         setContentView(R.layout.activity_article_detail);
+
+        Bundle extras = getIntent().getExtras();
+        if (extras != null && extras.containsKey(EXTRA_ARTICLE)) {
+
+            articleInfo = extras.getParcelable(EXTRA_ARTICLE);
+//            String body = extras.getString(EXTRA_BODY);
+
+            if (articleInfo != null) {
+                populatePhoto(articleInfo);
+                setShareButton();
+            }
+        }
 
         getSupportLoaderManager().initLoader(0, null, this);
 
@@ -107,13 +136,75 @@ public class ArticleDetailActivity extends AppCompatActivity
         }
     }
 
+    private void setShareButton() {
+        findViewById(R.id.share_fab).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(Intent.createChooser(ShareCompat.IntentBuilder.from(ArticleDetailActivity.this)
+                        .setType("text/plain")
+                        .setText("Some sample text")
+                        .getIntent(), getString(R.string.action_share)));
+            }
+        });
+    }
+
+    private void populatePhoto(ArticleInfo articleInfo) {
+        final ImageView photo = findViewById(R.id.thumbnail);
+
+        Picasso.with(this)
+                .load(articleInfo.getPhotoUrl())
+                .fit()
+                .centerCrop()
+                .into(photo, new Callback() {
+                    @Override
+                    public void onSuccess() {
+                        Bitmap bitmap = ((BitmapDrawable) photo.getDrawable()).getBitmap();
+                        setToolbarColor(bitmap);
+                    }
+
+                    @Override
+                    public void onError() { }
+                });
+    }
+
+    public void setToolbarColor(Bitmap bitmap) {
+        Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
+            public void onGenerated(@NonNull Palette p) {
+                CollapsingToolbarLayout collapsingToolbar = findViewById(R.id.collapsingToolbar);
+                FloatingActionButton fab = findViewById(R.id.share_fab);
+
+                int backgroundColor = ContextCompat.getColor(ArticleDetailActivity.this, R.color.theme_primary);
+                int statusBarColor = ContextCompat.getColor(ArticleDetailActivity.this, R.color.theme_primary_dark);
+                int fabColor = ContextCompat.getColor(ArticleDetailActivity.this, R.color.theme_accent);
+
+                collapsingToolbar.setBackgroundColor(backgroundColor);
+
+                backgroundColor = p.getMutedColor(backgroundColor);
+                statusBarColor = p.getDarkMutedColor(statusBarColor);
+                fabColor = p.getLightVibrantColor(fabColor);
+
+                collapsingToolbar.setBackgroundColor(backgroundColor);
+
+                collapsingToolbar.setStatusBarScrimColor(statusBarColor);
+                collapsingToolbar.setContentScrimColor(backgroundColor);
+
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    getWindow().setStatusBarColor(statusBarColor);
+                }
+
+                fab.setBackgroundTintList(ColorStateList.valueOf(fabColor));
+            }
+        });
+    }
+
+    @NonNull
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
         return ArticleLoader.newAllArticlesInstance(this);
     }
 
     @Override
-    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+    public void onLoadFinished(@NonNull Loader<Cursor> cursorLoader, Cursor cursor) {
         mCursor = cursor;
         mPagerAdapter.notifyDataSetChanged();
 
@@ -134,7 +225,7 @@ public class ArticleDetailActivity extends AppCompatActivity
     }
 
     @Override
-    public void onLoaderReset(Loader<Cursor> cursorLoader) {
+    public void onLoaderReset(@NonNull Loader<Cursor> cursorLoader) {
         mCursor = null;
         mPagerAdapter.notifyDataSetChanged();
     }
@@ -152,7 +243,7 @@ public class ArticleDetailActivity extends AppCompatActivity
 //    }
 
     private class MyPagerAdapter extends FragmentStatePagerAdapter {
-        public MyPagerAdapter(FragmentManager fm) {
+        MyPagerAdapter(FragmentManager fm) {
             super(fm);
         }
 

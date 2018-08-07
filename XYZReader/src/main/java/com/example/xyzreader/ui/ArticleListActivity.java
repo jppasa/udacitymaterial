@@ -29,6 +29,8 @@ import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.data.ItemsContract;
 import com.example.xyzreader.data.UpdaterService;
+import com.example.xyzreader.models.ArticleInfo;
+import com.example.xyzreader.utils.ArticleUtils;
 import com.squareup.picasso.Picasso;
 
 import java.text.ParseException;
@@ -193,9 +195,8 @@ public class ArticleListActivity extends AppCompatActivity implements
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    Uri uri = ItemsContract.Items.buildItemUri(getItemId(holder.getAdapterPosition()));
-
-                    launchDetailActivity(uri, holder.thumbnailView);
+                    ArticleInfo articleInfo = ArticleUtils.retrieveArticle(mCursor, holder.getAdapterPosition());
+                    launchDetailActivity(articleInfo, holder.thumbnailView);
                 }
             });
 //            holder.thumbnailView.setImageUrl(
@@ -210,11 +211,13 @@ public class ArticleListActivity extends AppCompatActivity implements
         }
     }
 
-    private void launchDetailActivity(Uri uri, ImageView thumbnailView) {
+    private void launchDetailActivity(ArticleInfo articleInfo, ImageView thumbnailView) {
+        Uri uri = ItemsContract.Items.buildItemUri(articleInfo.getId());
+
         String transitionName = getString(R.string.transition_thumbnail);
 
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
-//        intent.putExtra(ArticleDetailActivity.EXTRA_ARTICLE, articleInfo);
+        intent.putExtra(ArticleDetailActivity.EXTRA_ARTICLE, articleInfo);
 
         ActivityOptionsCompat options =
                 ActivityOptionsCompat.makeSceneTransitionAnimation(this,
