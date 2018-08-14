@@ -5,31 +5,24 @@ import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
-import android.support.transition.TransitionListenerAdapter;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.app.ShareCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.Loader;
-import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
-import android.transition.Transition;
-import android.util.TypedValue;
+import android.text.Html;
+import android.text.format.DateUtils;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.WindowInsets;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
@@ -37,6 +30,14 @@ import com.example.xyzreader.data.ItemsContract;
 import com.example.xyzreader.models.ArticleInfo;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.Locale;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * An activity representing a single Article detail screen, letting you swipe between articles.
@@ -47,17 +48,27 @@ public class ArticleDetailActivity extends AppCompatActivity
     public static final String EXTRA_ARTICLE = "extra_article";
     private ArticleInfo articleInfo;
 
-    private Cursor mCursor;
-    private long mStartId;
+    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss", Locale.US);
+    // Use default locale format
+    private static final SimpleDateFormat outputFormat = new SimpleDateFormat();
+    // Most time functions can only handle 1902 - 2037
+    private static final GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2,1,1);
 
-    private long mSelectedItemId;
-    private int mSelectedItemUpButtonFloor = Integer.MAX_VALUE;
-    private int mTopInset;
+//    private Cursor mCursor;
+//    private long mStartId;
 
-    private ViewPager mPager;
-    private MyPagerAdapter mPagerAdapter;
+//    private long mSelectedItemId;
+//    private int mSelectedItemUpButtonFloor = Integer.MAX_VALUE;
+//    private int mTopInset;
+
+//    private ViewPager mPager;
+//    private MyPagerAdapter mPagerAdapter;
 //    private View mUpButtonContainer;
 //    private View mUpButton;
+
+    @BindView(R.id.imgThumbnail) ImageView imgThumbnail;
+    @BindView(R.id.txtArticleTitle) TextView txtArticleTitle;
+    @BindView(R.id.txtArticleByline) TextView txtArticleByline;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +81,7 @@ public class ArticleDetailActivity extends AppCompatActivity
         }
 
         setContentView(R.layout.activity_article_detail);
+        ButterKnife.bind(this);
 
         Bundle extras = getIntent().getExtras();
         if (extras != null && extras.containsKey(EXTRA_ARTICLE)) {
@@ -79,42 +91,65 @@ public class ArticleDetailActivity extends AppCompatActivity
 
             if (articleInfo != null) {
                 populatePhoto(articleInfo);
+                populateTitles(articleInfo);
                 setShareButton();
             }
         }
 
 //        getSupportLoaderManager().initLoader(0, null, this);
 
-        mPagerAdapter = new MyPagerAdapter(getSupportFragmentManager());
-        mPager = findViewById(R.id.pager);
-        mPager.setAdapter(mPagerAdapter);
-        mPager.setPageMargin((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, getResources().getDisplayMetrics()));
-        mPager.setPageMarginDrawable(new ColorDrawable(0x00000000));
-
-        mPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-            @Override
-            public void onPageSelected(int position) {
-                if (mCursor != null) {
-                    mCursor.moveToPosition(position);
-                    mSelectedItemId = mCursor.getLong(ArticleLoader.Query._ID);
-                }
-            }
-        });
+//        mPagerAdapter = new MyPagerAdapter(getSupportFragmentManager());
+//        mPager = findViewById(R.id.pager);
+//        mPager.setAdapter(mPagerAdapter);
+//        mPager.setPageMargin((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, getResources().getDisplayMetrics()));
+//        mPager.setPageMarginDrawable(new ColorDrawable(0x00000000));
+//
+//        mPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
+//            @Override
+//            public void onPageSelected(int position) {
+//                if (mCursor != null) {
+//                    mCursor.moveToPosition(position);
+//                    mSelectedItemId = mCursor.getLong(ArticleLoader.Query._ID);
+//                }
+//            }
+//        });
 
         if (savedInstanceState == null) {
             if (getIntent() != null && getIntent().getData() != null) {
-                mStartId = ItemsContract.Items.getItemId(getIntent().getData());
-                mSelectedItemId = mStartId;
+//                mStartId = ItemsContract.Items.getItemId(getIntent().getData());
+//                mSelectedItemId = mStartId;
             }
         }
 
-        getSupportLoaderManager().initLoader(0, null, this);
+//        getSupportLoaderManager().initLoader(0, null, this);
+
+//        supportPostponeEnterTransition();
     }
 
-//    @Override
-//    public void onEnterAnimationComplete() {
-//
-//    }
+    private void populateTitles(ArticleInfo articleInfo) {
+        txtArticleTitle.setText(articleInfo.getTitle());
+
+        Date publishedDate = articleInfo.getDate(); //parsePublishedDate();
+
+        if (!publishedDate.before(START_OF_EPOCH.getTime())) {
+            txtArticleByline.setText(Html.fromHtml(
+                    DateUtils.getRelativeTimeSpanString(
+                            publishedDate.getTime(),
+                            System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
+                            DateUtils.FORMAT_ABBREV_ALL).toString()
+                            + " by <font color='#ffffff'>"
+                            + articleInfo.getAuthor()
+                            + "</font>"));
+
+        } else {
+            // If date is before 1902, just show the string
+            txtArticleByline.setText(Html.fromHtml(
+                    outputFormat.format(publishedDate) + " by <font color='#ffffff'>"
+                            + articleInfo.getAuthor()
+                            + "</font>"));
+
+        }
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -140,16 +175,15 @@ public class ArticleDetailActivity extends AppCompatActivity
     }
 
     private void populatePhoto(ArticleInfo articleInfo) {
-        final ImageView photo = findViewById(R.id.thumbnail);
 
         Picasso.with(this)
                 .load(articleInfo.getPhotoUrl())
                 .fit()
                 .centerCrop()
-                .into(photo, new Callback() {
+                .into(imgThumbnail, new Callback() {
                     @Override
                     public void onSuccess() {
-                        Bitmap bitmap = ((BitmapDrawable) photo.getDrawable()).getBitmap();
+                        Bitmap bitmap = ((BitmapDrawable) imgThumbnail.getDrawable()).getBitmap();
                         setToolbarColor(bitmap);
 
 //                        scheduleStartPostponedTransition(photo);
@@ -210,29 +244,31 @@ public class ArticleDetailActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> cursorLoader, Cursor cursor) {
-        mCursor = cursor;
-        mPagerAdapter.notifyDataSetChanged();
+//        supportStartPostponedEnterTransition();
+
+//        mCursor = cursor;
+//        mPagerAdapter.notifyDataSetChanged();
 
         // Select the start ID
-        if (mStartId > 0) {
-            mCursor.moveToFirst();
-            // TODO: optimize
-            while (!mCursor.isAfterLast()) {
-                if (mCursor.getLong(ArticleLoader.Query._ID) == mStartId) {
-                    final int position = mCursor.getPosition();
-                    mPager.setCurrentItem(position, false);
-                    break;
-                }
-                mCursor.moveToNext();
-            }
-            mStartId = 0;
-        }
+//        if (mStartId > 0) {
+//            mCursor.moveToFirst();
+//            // TODO: optimize
+//            while (!mCursor.isAfterLast()) {
+//                if (mCursor.getLong(ArticleLoader.Query._ID) == mStartId) {
+////                    final int position = mCursor.getPosition();
+////                    mPager.setCurrentItem(position, false);
+//                    break;
+//                }
+//                mCursor.moveToNext();
+//            }
+//            mStartId = 0;
+//        }
     }
 
     @Override
     public void onLoaderReset(@NonNull Loader<Cursor> cursorLoader) {
-        mCursor = null;
-        mPagerAdapter.notifyDataSetChanged();
+//        mCursor = null;
+//        mPagerAdapter.notifyDataSetChanged();
     }
 
 //    public void onUpButtonFloorChanged(long itemId, ArticleDetailFragment fragment) {
@@ -247,31 +283,31 @@ public class ArticleDetailActivity extends AppCompatActivity
 //        mUpButton.setTranslationY(Math.min(mSelectedItemUpButtonFloor - upButtonNormalBottom, 0));
 //    }
 
-    private class MyPagerAdapter extends FragmentStatePagerAdapter {
-        MyPagerAdapter(FragmentManager fm) {
-            super(fm);
-        }
-
-        @Override
-        public void setPrimaryItem(ViewGroup container, int position, Object object) {
-            super.setPrimaryItem(container, position, object);
-//            ArticleDetailFragment fragment = (ArticleDetailFragment) object;
-//            if (fragment != null) {
-////                mSelectedItemUpButtonFloor = fragment.getUpButtonFloor();
-////                updateUpButtonPosition();
-//            }
-        }
-
-
-        @Override
-        public Fragment getItem(int position) {
-            mCursor.moveToPosition(position);
-            return ArticleDetailFragment.newInstance(mCursor.getLong(ArticleLoader.Query._ID));
-        }
-
-        @Override
-        public int getCount() {
-            return (mCursor != null) ? mCursor.getCount() : 0;
-        }
-    }
+//    private class MyPagerAdapter extends FragmentStatePagerAdapter {
+//        MyPagerAdapter(FragmentManager fm) {
+//            super(fm);
+//        }
+//
+//        @Override
+//        public void setPrimaryItem(ViewGroup container, int position, Object object) {
+//            super.setPrimaryItem(container, position, object);
+////            ArticleDetailFragment fragment = (ArticleDetailFragment) object;
+////            if (fragment != null) {
+//////                mSelectedItemUpButtonFloor = fragment.getUpButtonFloor();
+//////                updateUpButtonPosition();
+////            }
+//        }
+//
+//
+//        @Override
+//        public Fragment getItem(int position) {
+//            mCursor.moveToPosition(position);
+//            return ArticleDetailFragment.newInstance(mCursor.getLong(ArticleLoader.Query._ID));
+//        }
+//
+//        @Override
+//        public int getCount() {
+//            return (mCursor != null) ? mCursor.getCount() : 0;
+//        }
+//    }
 }

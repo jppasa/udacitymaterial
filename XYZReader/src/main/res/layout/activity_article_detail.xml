@@ -21,16 +21,53 @@
             app:contentScrim="?attr/colorPrimary"
             app:layout_scrollFlags="scroll|enterAlways">
 
-            <ImageView
-                android:id="@+id/thumbnail"
+            <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:contentDescription="@string/article_thumbnail"
-                android:transitionName="@string/transition_thumbnail"
-                android:fitsSystemWindows="true"
-                android:scaleType="centerCrop"
-                android:src="@drawable/empty_detail"
-                app:layout_collapseMode="parallax" />
+                android:fitsSystemWindows="true">
+
+                <ImageView
+                    android:id="@+id/imgThumbnail"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@string/article_thumbnail"
+                    android:transitionName="@string/transition_thumbnail"
+                    android:fitsSystemWindows="true"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/empty_detail"
+                    app:layout_collapseMode="parallax" />
+
+                <LinearLayout
+                    android:id="@+id/meta_bar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:background="@color/black_transparent"
+                    android:orientation="vertical"
+                    android:paddingBottom="@dimen/detail_metabar_vert_padding"
+                    android:paddingLeft="@dimen/detail_inner_horiz_margin"
+                    android:paddingRight="@dimen/detail_inner_horiz_margin"
+                    android:paddingTop="@dimen/detail_metabar_vert_padding">
+
+                    <TextView
+                        style="?android:attr/textAppearanceLarge"
+                        android:id="@+id/txtArticleTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineSpacingMultiplier="0.9"
+                        android:textColor="#fff"
+                        android:textSize="@dimen/detail_title_text_size"
+                        tools:text="Article Title"/>
+
+                    <TextView
+                        style="?android:attr/textAppearanceSmall"
+                        android:id="@+id/txtArticleByline"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        tools:text="Article subtitle"
+                        android:textColor="#8fff" />
+                </LinearLayout>
+            </FrameLayout>
 
             <!--<android.support.v7.widget.Toolbar-->
                 <!--android:id="@+id/toolbar"-->
@@ -42,11 +79,80 @@
         </android.support.design.widget.CollapsingToolbarLayout>
     </android.support.design.widget.AppBarLayout>
 
-    <android.support.v4.view.ViewPager
-        android:id="@+id/pager"
+    <android.support.v4.widget.NestedScrollView
+        android:id="@+id/scrollview"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:layout_behavior="@string/appbar_scrolling_view_behavior"/>
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <android.support.v7.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="@dimen/cardview_default_radius"
+            android:layout_marginTop="32dp"
+            android:layout_marginLeft="@dimen/detail_inner_horiz_margin"
+            android:layout_marginStart="@dimen/detail_inner_horiz_margin"
+            android:layout_marginRight="@dimen/detail_inner_horiz_margin"
+            android:layout_marginEnd="@dimen/detail_inner_horiz_margin">
+
+            <com.example.xyzreader.ui.MaxWidthLinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:background="#fff"
+                android:maxWidth="@dimen/detail_card_max_width"
+                android:orientation="vertical">
+
+                <!--<LinearLayout-->
+                    <!--android:id="@+id/meta_bar"-->
+                    <!--android:layout_width="match_parent"-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:layout_gravity="bottom"-->
+                    <!--android:layout_marginBottom="@dimen/detail_metabar_vert_padding"-->
+                    <!--android:background="#333"-->
+                    <!--android:orientation="vertical"-->
+                    <!--android:paddingBottom="@dimen/detail_metabar_vert_padding"-->
+                    <!--android:paddingLeft="@dimen/detail_inner_horiz_margin"-->
+                    <!--android:paddingRight="@dimen/detail_inner_horiz_margin"-->
+                    <!--android:paddingTop="@dimen/detail_metabar_vert_padding">-->
+
+                    <!--<TextView-->
+                        <!--android:id="@+id/article_title"-->
+                        <!--style="?android:attr/textAppearanceLarge"-->
+                        <!--android:layout_width="match_parent"-->
+                        <!--android:layout_height="wrap_content"-->
+                        <!--android:fontFamily="sans-serif-condensed"-->
+                        <!--android:lineSpacingMultiplier="0.9"-->
+                        <!--android:paddingBottom="@dimen/detail_metabar_title_bottom_padding"-->
+                        <!--android:textColor="#fff"-->
+                        <!--android:textSize="@dimen/detail_title_text_size"-->
+                        <!--android:textStyle="bold" />-->
+
+                    <!--<TextView-->
+                        <!--android:id="@+id/article_byline"-->
+                        <!--style="?android:attr/textAppearanceSmall"-->
+                        <!--android:layout_width="wrap_content"-->
+                        <!--android:layout_height="wrap_content"-->
+                        <!--android:textColor="#8fff" />-->
+                <!--</LinearLayout>-->
+
+                <TextView
+                    android:id="@+id/article_body"
+                    style="?android:attr/textAppearanceMedium"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/detail_inner_horiz_margin"
+                    android:layout_marginRight="@dimen/detail_inner_horiz_margin"
+                    android:lineSpacingMultiplier="@fraction/detail_body_line_spacing_multiplier"
+                    android:paddingBottom="@dimen/detail_body_bottom_margin"
+                    android:textColor="@android:color/secondary_text_light"
+                    tools:text="@string/lorem_ipsum"
+                    android:textColorLink="@color/theme_accent"
+                    android:textSize="@dimen/detail_body_text_size" />
+
+            </com.example.xyzreader.ui.MaxWidthLinearLayout>
+        </android.support.v7.widget.CardView>
+    </android.support.v4.widget.NestedScrollView>
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/share_fab"
