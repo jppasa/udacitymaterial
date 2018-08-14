@@ -19,7 +19,7 @@
             android:layout_height="match_parent"
             android:fitsSystemWindows="true"
             app:contentScrim="?attr/colorPrimary"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed">
+            app:layout_scrollFlags="scroll|enterAlways">
 
             <ImageView
                 android:id="@+id/thumbnail"
@@ -32,48 +32,13 @@
                 android:src="@drawable/empty_detail"
                 app:layout_collapseMode="parallax" />
 
-            <android.support.v7.widget.Toolbar
-                android:id="@+id/toolbar"
-                android:layout_width="match_parent"
-                android:layout_height="?attr/actionBarSize"
-                app:layout_collapseMode="pin"
-                app:navigationIcon="@drawable/ic_arrow_back"
-                app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
-                app:subtitle="Subtitle of the article"
-                app:title="Title of the article"
-                tools:title="" />
+            <!--<android.support.v7.widget.Toolbar-->
+                <!--android:id="@+id/toolbar"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="?attr/actionBarSize"-->
+                <!--app:layout_collapseMode="pin"-->
+                <!--app:popupTheme="@style/ThemeOverlay.AppCompat.Light" />-->
 
-            <!--<LinearLayout-->
-            <!--android:id="@+id/meta_bar"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="100dp"-->
-            <!--android:background="#333"-->
-            <!--android:layout_gravity="bottom"-->
-            <!--android:orientation="vertical"-->
-            <!--android:paddingLeft="@dimen/detail_inner_horiz_margin"-->
-            <!--android:paddingRight="@dimen/detail_inner_horiz_margin"-->
-            <!--android:paddingTop="@dimen/detail_metabar_vert_padding"-->
-            <!--android:paddingBottom="@dimen/detail_metabar_vert_padding">-->
-
-            <!--<TextView-->
-            <!--style="?android:attr/textAppearanceLarge"-->
-            <!--android:id="@+id/article_title"-->
-            <!--android:layout_width="match_parent"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:fontFamily="sans-serif-condensed"-->
-            <!--android:textColor="#fff"-->
-            <!--android:textStyle="bold"-->
-            <!--android:textSize="@dimen/detail_title_text_size"-->
-            <!--tools:text="This is the article title!"/>-->
-
-            <!--<TextView-->
-            <!--style="?android:attr/textAppearanceSmall"-->
-            <!--android:id="@+id/article_byline"-->
-            <!--android:layout_width="wrap_content"-->
-            <!--android:layout_height="wrap_content"-->
-            <!--android:textColor="#8fff"-->
-            <!--tools:text="This is the subtitle!"/>-->
-            <!--</LinearLayout>-->
         </android.support.design.widget.CollapsingToolbarLayout>
     </android.support.design.widget.AppBarLayout>
 
