@@ -1,9 +1,11 @@
 package com.example.xyzreader.ui;
 
+import android.animation.Animator;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -18,15 +20,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
 import android.text.Html;
 import android.text.format.DateUtils;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewTreeObserver;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.xyzreader.R;
 import com.example.xyzreader.data.ArticleLoader;
-import com.example.xyzreader.data.ItemsContract;
 import com.example.xyzreader.models.ArticleInfo;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
@@ -46,6 +49,7 @@ public class ArticleDetailActivity extends AppCompatActivity
         implements LoaderManager.LoaderCallbacks<Cursor> {
 
     public static final String EXTRA_ARTICLE = "extra_article";
+    public static final String EXTRA_PHOTO = "extra_photo";
     private ArticleInfo articleInfo;
 
     private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss", Locale.US);
@@ -69,6 +73,10 @@ public class ArticleDetailActivity extends AppCompatActivity
     @BindView(R.id.imgThumbnail) ImageView imgThumbnail;
     @BindView(R.id.txtArticleTitle) TextView txtArticleTitle;
     @BindView(R.id.txtArticleByline) TextView txtArticleByline;
+    @BindView(R.id.share_fab) FloatingActionButton shareFab;
+    @BindView(R.id.article_body) TextView txtArticleBody;
+
+    private Cursor mCursor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +86,8 @@ public class ArticleDetailActivity extends AppCompatActivity
             getWindow().getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
                             View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
+
+//            getWindow().setEnterTransition(null);
         }
 
         setContentView(R.layout.activity_article_detail);
@@ -87,14 +97,16 @@ public class ArticleDetailActivity extends AppCompatActivity
         if (extras != null && extras.containsKey(EXTRA_ARTICLE)) {
 
             articleInfo = extras.getParcelable(EXTRA_ARTICLE);
+            Bitmap photo = extras.getParcelable(EXTRA_PHOTO);
 //            String body = extras.getString(EXTRA_BODY);
 
             if (articleInfo != null) {
-                populatePhoto(articleInfo);
+                populatePhoto(articleInfo, photo);
                 populateTitles(articleInfo);
                 setShareButton();
             }
         }
+
 
 //        getSupportLoaderManager().initLoader(0, null, this);
 
@@ -124,6 +136,12 @@ public class ArticleDetailActivity extends AppCompatActivity
 //        getSupportLoaderManager().initLoader(0, null, this);
 
 //        supportPostponeEnterTransition();
+    }
+
+    @Override
+    public void onEnterAnimationComplete() {
+        showFab();
+        getSupportLoaderManager().initLoader(0, null, this);
     }
 
     private void populateTitles(ArticleInfo articleInfo) {
@@ -174,36 +192,43 @@ public class ArticleDetailActivity extends AppCompatActivity
         });
     }
 
-    private void populatePhoto(ArticleInfo articleInfo) {
+    private void populatePhoto(ArticleInfo articleInfo, Bitmap photo) {
+        if (photo != null) {
+            imgThumbnail.setImageBitmap(photo);
+            setToolbarColor(photo);
+        } else {
+            supportPostponeEnterTransition();
 
-        Picasso.with(this)
-                .load(articleInfo.getPhotoUrl())
-                .fit()
-                .centerCrop()
-                .into(imgThumbnail, new Callback() {
-                    @Override
-                    public void onSuccess() {
-                        Bitmap bitmap = ((BitmapDrawable) imgThumbnail.getDrawable()).getBitmap();
-                        setToolbarColor(bitmap);
+            Picasso.with(this)
+                    .load(articleInfo.getPhotoUrl())
+                    .fit()
+                    .centerCrop()
+                    .into(imgThumbnail, new Callback() {
+                        @Override
+                        public void onSuccess() {
+                            Bitmap bitmap = ((BitmapDrawable) imgThumbnail.getDrawable()).getBitmap();
+                            setToolbarColor(bitmap);
 
-//                        scheduleStartPostponedTransition(photo);
-                    }
+                            supportStartPostponedEnterTransition();
+//                            scheduleStartPostponedTransition(imgThumbnail);
+                        }
 
-                    @Override
-                    public void onError() { }
-                });
+                        @Override
+                        public void onError() {
+                            supportStartPostponedEnterTransition();
+//                            scheduleStartPostponedTransition(imgThumbnail);
+                        }
+                    });
+        }
     }
 
-    private void scheduleStartPostponedTransition(final ImageView photo) {
-        photo.getViewTreeObserver().addOnPreDrawListener(
-                new ViewTreeObserver.OnPreDrawListener() {
-                    @Override
-                    public boolean onPreDraw() {
-                        photo.getViewTreeObserver().removeOnPreDrawListener(this);
-                        supportStartPostponedEnterTransition();
-                        return true;
-                    }
-                });
+    private void showFab() {
+        shareFab.animate()
+                .alpha(1)
+                .scaleX(1)
+                .scaleY(1)
+                .setInterpolator(new DecelerateInterpolator())
+                .start();
     }
 
     public void setToolbarColor(Bitmap bitmap) {
@@ -236,78 +261,69 @@ public class ArticleDetailActivity extends AppCompatActivity
         });
     }
 
+    @Override
+    public void onBackPressed() {
+        supportFinishAfterTransition();
+        shareFab.animate()
+                .alpha(0)
+                .scaleX(0)
+                .scaleY(0)
+                .setInterpolator(new AccelerateInterpolator())
+                .setListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) { }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        shareFab.setVisibility(View.GONE);
+                        ArticleDetailActivity.super.onBackPressed();
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+                        shareFab.setVisibility(View.GONE);
+                        ArticleDetailActivity.super.onBackPressed();
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) { }
+                })
+                .start();
+
+//        super.onBackPressed();
+    }
+
     @NonNull
     @Override
     public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-        return ArticleLoader.newAllArticlesInstance(this);
+        return ArticleLoader.newInstanceForItemId(this, articleInfo.getId());
     }
 
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> cursorLoader, Cursor cursor) {
-//        supportStartPostponedEnterTransition();
+        String body = "N/A";
 
-//        mCursor = cursor;
-//        mPagerAdapter.notifyDataSetChanged();
+        mCursor = cursor;
+        if (mCursor != null && mCursor.moveToFirst()) {
+            body = mCursor.getString(ArticleLoader.Query.BODY)
+                    .replaceAll("(\r\n|\n)", "<br />");
+        } else {
+            if (mCursor != null) {
+                mCursor.close();
+            }
 
-        // Select the start ID
-//        if (mStartId > 0) {
-//            mCursor.moveToFirst();
-//            // TODO: optimize
-//            while (!mCursor.isAfterLast()) {
-//                if (mCursor.getLong(ArticleLoader.Query._ID) == mStartId) {
-////                    final int position = mCursor.getPosition();
-////                    mPager.setCurrentItem(position, false);
-//                    break;
-//                }
-//                mCursor.moveToNext();
-//            }
-//            mStartId = 0;
-//        }
+            mCursor = null;
+        }
+
+        Typeface typeface = Typeface.createFromAsset(getResources().getAssets(), "Rosario-Regular.ttf");
+
+        txtArticleBody.setTypeface(typeface);
+        txtArticleBody.setText(Html.fromHtml(body));
     }
 
     @Override
     public void onLoaderReset(@NonNull Loader<Cursor> cursorLoader) {
-//        mCursor = null;
-//        mPagerAdapter.notifyDataSetChanged();
+        mCursor = null;
     }
 
-//    public void onUpButtonFloorChanged(long itemId, ArticleDetailFragment fragment) {
-//        if (itemId == mSelectedItemId) {
-//            mSelectedItemUpButtonFloor = fragment.getUpButtonFloor();
-////            updateUpButtonPosition();
-//        }
-//    }
-
-//    private void updateUpButtonPosition() {
-//        int upButtonNormalBottom = mTopInset + mUpButton.getHeight();
-//        mUpButton.setTranslationY(Math.min(mSelectedItemUpButtonFloor - upButtonNormalBottom, 0));
-//    }
-
-//    private class MyPagerAdapter extends FragmentStatePagerAdapter {
-//        MyPagerAdapter(FragmentManager fm) {
-//            super(fm);
-//        }
-//
-//        @Override
-//        public void setPrimaryItem(ViewGroup container, int position, Object object) {
-//            super.setPrimaryItem(container, position, object);
-////            ArticleDetailFragment fragment = (ArticleDetailFragment) object;
-////            if (fragment != null) {
-//////                mSelectedItemUpButtonFloor = fragment.getUpButtonFloor();
-//////                updateUpButtonPosition();
-////            }
-//        }
-//
-//
-//        @Override
-//        public Fragment getItem(int position) {
-//            mCursor.moveToPosition(position);
-//            return ArticleDetailFragment.newInstance(mCursor.getLong(ArticleLoader.Query._ID));
-//        }
-//
-//        @Override
-//        public int getCount() {
-//            return (mCursor != null) ? mCursor.getCount() : 0;
-//        }
-//    }
 }

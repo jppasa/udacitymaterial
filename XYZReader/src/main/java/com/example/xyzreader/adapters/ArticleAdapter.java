@@ -74,11 +74,18 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHold
 
         final int finalPosition = position;
         final ImageView finalThumbnail = holder.thumbnailView;
+        final TextView finalTitle = holder.titleView;
+        final TextView finalSubtitle = holder.subtitleView;
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (mArticleClickListener != null) {
-                    mArticleClickListener.onArticleClicked(finalThumbnail, finalPosition, articleInfo);
+                    mArticleClickListener.onArticleClicked(
+                            finalThumbnail,
+                            finalTitle,
+                            finalSubtitle,
+                            finalPosition,
+                            articleInfo);
                 }
             }
         });
@@ -108,6 +115,6 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHold
     }
 
     public interface ArticleClickListener {
-        void onArticleClicked(ImageView imageView, int position, ArticleInfo articleInfo);
+        void onArticleClicked(ImageView imageView, TextView titleView, TextView subtitleView, int position, ArticleInfo articleInfo);
     }
 }

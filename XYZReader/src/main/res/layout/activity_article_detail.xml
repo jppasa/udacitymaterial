@@ -56,6 +56,7 @@
                         android:layout_height="wrap_content"
                         android:lineSpacingMultiplier="0.9"
                         android:textColor="#fff"
+                        android:transitionName="@string/transition_title"
                         android:textSize="@dimen/detail_title_text_size"
                         tools:text="Article Title"/>
 
@@ -64,6 +65,7 @@
                         android:id="@+id/txtArticleByline"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:transitionName="@string/transition_subtitle"
                         tools:text="Article subtitle"
                         android:textColor="#8fff" />
                 </LinearLayout>
@@ -162,7 +164,11 @@
         app:layout_anchor="@id/appbar"
         app:layout_anchorGravity="bottom|right|end"
         app:srcCompat="@drawable/ic_share"
-        app:useCompatPadding="true" />
+        app:useCompatPadding="true"
+
+        android:alpha="0"
+        android:scaleX="0"
+        android:scaleY="0"/>
 
 
 </android.support.design.widget.CoordinatorLayout>
