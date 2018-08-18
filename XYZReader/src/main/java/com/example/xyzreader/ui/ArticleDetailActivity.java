@@ -18,6 +18,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.text.format.DateUtils;
 import android.util.Log;
@@ -29,6 +31,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.example.xyzreader.R;
+import com.example.xyzreader.adapters.ArticleParagraphAdapter;
 import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.models.ArticleInfo;
 import com.squareup.picasso.Callback;
@@ -74,7 +77,8 @@ public class ArticleDetailActivity extends AppCompatActivity
     @BindView(R.id.txtArticleTitle) TextView txtArticleTitle;
     @BindView(R.id.txtArticleByline) TextView txtArticleByline;
     @BindView(R.id.share_fab) FloatingActionButton shareFab;
-    @BindView(R.id.article_body) TextView txtArticleBody;
+    @BindView(R.id.recycler_view) RecyclerView recyclerView;
+//    @BindView(R.id.article_body) TextView txtArticleBody;
 
     private Cursor mCursor;
 
@@ -108,24 +112,6 @@ public class ArticleDetailActivity extends AppCompatActivity
         }
 
 
-//        getSupportLoaderManager().initLoader(0, null, this);
-
-//        mPagerAdapter = new MyPagerAdapter(getSupportFragmentManager());
-//        mPager = findViewById(R.id.pager);
-//        mPager.setAdapter(mPagerAdapter);
-//        mPager.setPageMargin((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1, getResources().getDisplayMetrics()));
-//        mPager.setPageMarginDrawable(new ColorDrawable(0x00000000));
-//
-//        mPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-//            @Override
-//            public void onPageSelected(int position) {
-//                if (mCursor != null) {
-//                    mCursor.moveToPosition(position);
-//                    mSelectedItemId = mCursor.getLong(ArticleLoader.Query._ID);
-//                }
-//            }
-//        });
-
         if (savedInstanceState == null) {
             if (getIntent() != null && getIntent().getData() != null) {
 //                mStartId = ItemsContract.Items.getItemId(getIntent().getData());
@@ -133,15 +119,20 @@ public class ArticleDetailActivity extends AppCompatActivity
             }
         }
 
-//        getSupportLoaderManager().initLoader(0, null, this);
+        loadArticle(false);
+    }
 
-//        supportPostponeEnterTransition();
+    private void loadArticle(boolean forceReload) {
+        if (forceReload) {
+            getSupportLoaderManager().restartLoader(0, null, this);
+        } else {
+            getSupportLoaderManager().initLoader(0, null, this);
+        }
     }
 
     @Override
     public void onEnterAnimationComplete() {
-        showFab();
-        getSupportLoaderManager().initLoader(0, null, this);
+//        showFab();
     }
 
     private void populateTitles(ArticleInfo articleInfo) {
@@ -301,12 +292,15 @@ public class ArticleDetailActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> cursorLoader, Cursor cursor) {
-        String body = "N/A";
+        showFab();
+//        String body = "N/A";
+        String[] paragraphs = new String[]{ "N/A" };
 
         mCursor = cursor;
         if (mCursor != null && mCursor.moveToFirst()) {
-            body = mCursor.getString(ArticleLoader.Query.BODY)
-                    .replaceAll("(\r\n|\n)", "<br />");
+            paragraphs = mCursor.getString(ArticleLoader.Query.BODY).split("(\r\n\r\n)|(\n\n)");
+//            body = mCursor.getString(ArticleLoader.Query.BODY)
+//                    .replaceAll("(\r\n|\n)", "<br />");
         } else {
             if (mCursor != null) {
                 mCursor.close();
@@ -315,10 +309,8 @@ public class ArticleDetailActivity extends AppCompatActivity
             mCursor = null;
         }
 
-        Typeface typeface = Typeface.createFromAsset(getResources().getAssets(), "Rosario-Regular.ttf");
-
-        txtArticleBody.setTypeface(typeface);
-        txtArticleBody.setText(Html.fromHtml(body));
+        recyclerView.setAdapter(new ArticleParagraphAdapter(this, paragraphs));
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
     }
 
     @Override

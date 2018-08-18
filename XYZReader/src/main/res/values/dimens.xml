@@ -8,4 +8,6 @@
     <dimen name="fab_press_translation_z">6dp</dimen>
     <dimen name="fab_margin">24dp</dimen>
 
+    <dimen name="card_default_negative_margin">-2dp</dimen>
+    <dimen name="detail_text_horiz_margin">16dp</dimen>
 </resources>

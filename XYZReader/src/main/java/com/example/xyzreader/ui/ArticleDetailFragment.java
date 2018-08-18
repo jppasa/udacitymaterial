@@ -44,15 +44,6 @@ public class ArticleDetailFragment extends Fragment implements LoaderManager.Loa
     private long mItemId;
     private View mRootView;
     private int mMutedColor = 0xFF333333;
-//    private ObservableScrollView mScrollView;
-//    private DrawInsetsFrameLayout mDrawInsetsFrameLayout;
-//    private ColorDrawable mStatusBarColorDrawable;
-
-    //    private View mPhotoContainerView;
-//    private ImageView mPhotoView;
-//    private int mScrollY;
-//    private boolean mIsCard = false;
-//    private int mStatusBarFullOpacityBottom;
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss", Locale.US);
     // Use default locale format
@@ -64,8 +55,7 @@ public class ArticleDetailFragment extends Fragment implements LoaderManager.Loa
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public ArticleDetailFragment() {
-    }
+    public ArticleDetailFragment() { }
 
     public static ArticleDetailFragment newInstance(long itemId) {
         Bundle arguments = new Bundle();
