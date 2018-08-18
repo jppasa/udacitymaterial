@@ -4,7 +4,7 @@ import android.net.Uri;
 
 public class ItemsContract {
 	public static final String CONTENT_AUTHORITY = "com.example.xyzreader";
-	public static final Uri BASE_URI = Uri.parse("content://com.example.xyzreader");
+	static final Uri BASE_URI = Uri.parse("content://com.example.xyzreader");
 
 	interface ItemsColumns {
 		/** Type: INTEGER PRIMARY KEY AUTOINCREMENT */
@@ -42,11 +42,6 @@ public class ItemsContract {
 		public static Uri buildItemUri(long _id) {
 			return BASE_URI.buildUpon().appendPath("items").appendPath(Long.toString(_id)).build();
 		}
-
-        /** Read item ID item detail URI. */
-        public static long getItemId(Uri itemUri) {
-            return Long.parseLong(itemUri.getPathSegments().get(1));
-        }
 	}
 
 	private ItemsContract() {

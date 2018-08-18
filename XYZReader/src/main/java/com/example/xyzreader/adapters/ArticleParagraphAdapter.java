@@ -21,6 +21,11 @@ public class ArticleParagraphAdapter extends RecyclerView.Adapter<ArticleParagra
     private final Typeface typeface;
     private String[] paragraphs;
 
+    public void setParagraphs(String[] paragraphs) {
+        this.paragraphs = paragraphs;
+        notifyDataSetChanged();
+    }
+
     enum ViewType {
         TOP, BOTTOM, MIDDLE
     }

@@ -5,10 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.database.Cursor;
-import android.graphics.Bitmap;
-import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -21,12 +18,7 @@ import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
-import android.support.v7.widget.Toolbar;
-import android.text.Html;
-import android.text.format.DateUtils;
-import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -37,16 +29,12 @@ import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.data.ItemsContract;
 import com.example.xyzreader.data.UpdaterService;
 import com.example.xyzreader.models.ArticleInfo;
-import com.example.xyzreader.utils.ArticleUtils;
-import com.squareup.picasso.Picasso;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.List;
-import java.util.Locale;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 
 /**
  * An activity representing a list of Articles. This activity has different presentations for
@@ -57,32 +45,15 @@ import java.util.Locale;
 public class ArticleListActivity extends AppCompatActivity implements
         LoaderManager.LoaderCallbacks<Cursor>,ArticleAdapter.ArticleClickListener {
     private static final int LOADER_ID = 0;
-    private static final String TAG = ArticleListActivity.class.toString();
 
-
-    private Toolbar mToolbar;
-    private SwipeRefreshLayout mSwipeRefreshLayout;
-    private RecyclerView mRecyclerView;
-
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss", Locale.getDefault());
-    // Use default locale format
-    private SimpleDateFormat outputFormat = new SimpleDateFormat();
-    // Most time functions can only handle 1902 - 2037
-    private GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2,1,1);
+    @BindView(R.id.swipe_refresh_layout) SwipeRefreshLayout mSwipeRefreshLayout;
+    @BindView(R.id.recycler_view) private RecyclerView mRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_article_list);
-
-        mToolbar = findViewById(R.id.toolbar);
-
-
-//        final View toolbarContainerView = findViewById(R.id.toolbar_container);
-
-        mSwipeRefreshLayout = findViewById(R.id.swipe_refresh_layout);
-
-        mRecyclerView = findViewById(R.id.recycler_view);
+        ButterKnife.bind(this);
 
         mSwipeRefreshLayout.setColorSchemeColors(ContextCompat.getColor(this, R.color.theme_accent));
         mSwipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -92,11 +63,11 @@ public class ArticleListActivity extends AppCompatActivity implements
             }
         });
 
-//        if (savedInstanceState == null) {
-//            refresh();
-//        }
-
-        loadArticles(false);
+        if (savedInstanceState == null) {
+            loadArticles(true);
+        } else {
+            loadArticles(false);
+        }
     }
 
     private void loadArticles(boolean forceRefresh) {
@@ -105,10 +76,6 @@ public class ArticleListActivity extends AppCompatActivity implements
         } else {
             getSupportLoaderManager().initLoader(LOADER_ID, null, this);
         }
-    }
-
-    private void refresh() {
-        startService(new Intent(this, UpdaterService.class));
     }
 
     @Override
@@ -164,14 +131,6 @@ public class ArticleListActivity extends AppCompatActivity implements
 
             adapter.setCursor(cursor);
         }
-
-//        Adapter adapter = new Adapter(cursor);
-//        adapter.setHasStableIds(true);
-//        mRecyclerView.setAdapter(adapter);
-//        int columnCount = getResources().getInteger(R.integer.list_column_count);
-//        StaggeredGridLayoutManager sglm =
-//                new StaggeredGridLayoutManager(columnCount, StaggeredGridLayoutManager.VERTICAL);
-//        mRecyclerView.setLayoutManager(sglm);
     }
 
     @Override
@@ -212,12 +171,6 @@ public class ArticleListActivity extends AppCompatActivity implements
         ActivityOptionsCompat options =
                 ActivityOptionsCompat.makeSceneTransitionAnimation(this,
                         pairs.toArray(new Pair[pairs.size()]));
-
-//        ActivityOptionsCompat options =
-//                ActivityOptionsCompat.makeSceneTransitionAnimation(this,
-//                        thumbnailView,          // Starting view
-//                        transitionName      // The String
-//                );
 
         ActivityCompat.startActivity(this, intent, options.toBundle());
     }

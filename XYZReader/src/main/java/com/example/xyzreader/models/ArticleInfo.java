@@ -70,10 +70,6 @@ public class ArticleInfo implements Parcelable {
         return photoUrl;
     }
 
-    public float getAspectRatio() {
-        return aspectRatio;
-    }
-
     @Override
     public int describeContents() {
         return 0;

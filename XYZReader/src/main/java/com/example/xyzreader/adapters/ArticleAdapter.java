@@ -4,8 +4,6 @@ import android.content.Context;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
-import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,18 +15,11 @@ import com.example.xyzreader.models.ArticleInfo;
 import com.example.xyzreader.utils.ArticleUtils;
 import com.squareup.picasso.Picasso;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.GregorianCalendar;
-
 public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHolder> {
-    private SimpleDateFormat outputFormat = new SimpleDateFormat();
-    // Most time functions can only handle 1902 - 2037
-    private GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2,1,1);
 
     private final Context mContext;
     private Cursor mCursor;
-    private ArticleClickListener mArticleClickListener = null;
+    private ArticleClickListener mArticleClickListener;
 
     public ArticleAdapter(Context context, Cursor cursor, ArticleClickListener listener) {
         mContext = context;
@@ -50,23 +41,7 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHold
         final ArticleInfo articleInfo = ArticleUtils.retrieveArticle(mCursor, position);
 
         holder.titleView.setText(articleInfo.getTitle());
-
-        Date publishedDate = articleInfo.getDate();
-
-        if (!publishedDate.before(START_OF_EPOCH.getTime())) {
-            String dateStr = DateUtils.getRelativeTimeSpanString(
-                    publishedDate.getTime(),
-                    System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
-                    DateUtils.FORMAT_ABBREV_ALL).toString();
-
-            holder.subtitleView.setText(Html.fromHtml(
-                    dateStr + "<br/>" + " by " + articleInfo.getAuthor()));
-        } else {
-            String dateStr = outputFormat.format(publishedDate);
-
-            holder.subtitleView.setText(Html.fromHtml(
-                    dateStr + "<br/>" + " by " + articleInfo.getAuthor()));
-        }
+        holder.subtitleView.setText(ArticleUtils.dateFrom(articleInfo.getDate(), articleInfo.getAuthor()));
 
         Picasso.with(mContext)
                 .load(articleInfo.getThumbnailUrl())
@@ -115,6 +90,10 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHold
     }
 
     public interface ArticleClickListener {
-        void onArticleClicked(ImageView imageView, TextView titleView, TextView subtitleView, int position, ArticleInfo articleInfo);
+        void onArticleClicked(ImageView imageView,
+                              TextView titleView,
+                              TextView subtitleView,
+                              int position,
+                              ArticleInfo articleInfo);
     }
 }

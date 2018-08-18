@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -20,9 +19,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.text.Html;
-import android.text.format.DateUtils;
-import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
@@ -34,13 +30,9 @@ import com.example.xyzreader.R;
 import com.example.xyzreader.adapters.ArticleParagraphAdapter;
 import com.example.xyzreader.data.ArticleLoader;
 import com.example.xyzreader.models.ArticleInfo;
+import com.example.xyzreader.utils.ArticleUtils;
 import com.squareup.picasso.Callback;
 import com.squareup.picasso.Picasso;
-
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.GregorianCalendar;
-import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -54,24 +46,6 @@ public class ArticleDetailActivity extends AppCompatActivity
     public static final String EXTRA_ARTICLE = "extra_article";
     public static final String EXTRA_PHOTO = "extra_photo";
     private ArticleInfo articleInfo;
-
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.sss", Locale.US);
-    // Use default locale format
-    private static final SimpleDateFormat outputFormat = new SimpleDateFormat();
-    // Most time functions can only handle 1902 - 2037
-    private static final GregorianCalendar START_OF_EPOCH = new GregorianCalendar(2,1,1);
-
-//    private Cursor mCursor;
-//    private long mStartId;
-
-//    private long mSelectedItemId;
-//    private int mSelectedItemUpButtonFloor = Integer.MAX_VALUE;
-//    private int mTopInset;
-
-//    private ViewPager mPager;
-//    private MyPagerAdapter mPagerAdapter;
-//    private View mUpButtonContainer;
-//    private View mUpButton;
 
     @BindView(R.id.imgThumbnail) ImageView imgThumbnail;
     @BindView(R.id.txtArticleTitle) TextView txtArticleTitle;
@@ -111,23 +85,11 @@ public class ArticleDetailActivity extends AppCompatActivity
             }
         }
 
-
-        if (savedInstanceState == null) {
-            if (getIntent() != null && getIntent().getData() != null) {
-//                mStartId = ItemsContract.Items.getItemId(getIntent().getData());
-//                mSelectedItemId = mStartId;
-            }
-        }
-
-        loadArticle(false);
+        loadArticle();
     }
 
-    private void loadArticle(boolean forceReload) {
-        if (forceReload) {
-            getSupportLoaderManager().restartLoader(0, null, this);
-        } else {
-            getSupportLoaderManager().initLoader(0, null, this);
-        }
+    private void loadArticle() {
+        getSupportLoaderManager().initLoader(0, null, this);
     }
 
     @Override
@@ -137,27 +99,7 @@ public class ArticleDetailActivity extends AppCompatActivity
 
     private void populateTitles(ArticleInfo articleInfo) {
         txtArticleTitle.setText(articleInfo.getTitle());
-
-        Date publishedDate = articleInfo.getDate(); //parsePublishedDate();
-
-        if (!publishedDate.before(START_OF_EPOCH.getTime())) {
-            txtArticleByline.setText(Html.fromHtml(
-                    DateUtils.getRelativeTimeSpanString(
-                            publishedDate.getTime(),
-                            System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
-                            DateUtils.FORMAT_ABBREV_ALL).toString()
-                            + " by <font color='#ffffff'>"
-                            + articleInfo.getAuthor()
-                            + "</font>"));
-
-        } else {
-            // If date is before 1902, just show the string
-            txtArticleByline.setText(Html.fromHtml(
-                    outputFormat.format(publishedDate) + " by <font color='#ffffff'>"
-                            + articleInfo.getAuthor()
-                            + "</font>"));
-
-        }
+        txtArticleByline.setText(ArticleUtils.dateFrom(articleInfo.getDate(), articleInfo.getAuthor()));
     }
 
     @Override
@@ -309,8 +251,13 @@ public class ArticleDetailActivity extends AppCompatActivity
             mCursor = null;
         }
 
-        recyclerView.setAdapter(new ArticleParagraphAdapter(this, paragraphs));
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        if (recyclerView.getAdapter() != null) {
+            ArticleParagraphAdapter adapter = (ArticleParagraphAdapter) recyclerView.getAdapter();
+            adapter.setParagraphs(paragraphs);
+        } else {
+            recyclerView.setAdapter(new ArticleParagraphAdapter(this, paragraphs));
+            recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        }
     }
 
     @Override
