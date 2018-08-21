@@ -29,4 +29,12 @@
 
     </style>
 
+    <style name="UpButtonTheme" parent="AppTheme">
+        <item name="colorAccent">@color/up_fab_color</item>
+    </style>
+
+    <style name="TransparentText">
+        <item name="android:textColor">#00000000</item>
+    </style>
+
 </resources>

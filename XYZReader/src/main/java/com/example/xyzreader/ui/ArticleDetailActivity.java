@@ -1,6 +1,7 @@
 package com.example.xyzreader.ui;
 
 import android.animation.Animator;
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.database.Cursor;
@@ -9,6 +10,7 @@ import android.graphics.drawable.BitmapDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.design.widget.AppBarLayout;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.LoaderManager;
@@ -21,9 +23,11 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.example.xyzreader.R;
@@ -45,16 +49,21 @@ public class ArticleDetailActivity extends AppCompatActivity
 
     public static final String EXTRA_ARTICLE = "extra_article";
     public static final String EXTRA_PHOTO = "extra_photo";
+    private static final String APP_BAR_EXPANDED = "app_bar_expanded";
     private ArticleInfo articleInfo;
 
+    @BindView(R.id.appbar) AppBarLayout appbar;
+    @BindView(R.id.collapsingToolbar) CollapsingToolbarLayout collapsingToolbar;
+    @BindView(R.id.meta_bar) LinearLayout metaBar;
     @BindView(R.id.imgThumbnail) ImageView imgThumbnail;
     @BindView(R.id.txtArticleTitle) TextView txtArticleTitle;
     @BindView(R.id.txtArticleByline) TextView txtArticleByline;
     @BindView(R.id.share_fab) FloatingActionButton shareFab;
+    @BindView(R.id.up_fab) FloatingActionButton upFab;
     @BindView(R.id.recycler_view) RecyclerView recyclerView;
-//    @BindView(R.id.article_body) TextView txtArticleBody;
 
     private Cursor mCursor;
+    private int scrimHeightTrigger;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,8 +73,6 @@ public class ArticleDetailActivity extends AppCompatActivity
             getWindow().getDecorView().setSystemUiVisibility(
                     View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN |
                             View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-
-//            getWindow().setEnterTransition(null);
         }
 
         setContentView(R.layout.activity_article_detail);
@@ -76,36 +83,64 @@ public class ArticleDetailActivity extends AppCompatActivity
 
             articleInfo = extras.getParcelable(EXTRA_ARTICLE);
             Bitmap photo = extras.getParcelable(EXTRA_PHOTO);
-//            String body = extras.getString(EXTRA_BODY);
 
             if (articleInfo != null) {
                 populatePhoto(articleInfo, photo);
                 populateTitles(articleInfo);
                 setShareButton();
+
+                loadArticle();
             }
         }
 
-        loadArticle();
+        if (savedInstanceState != null) {
+            boolean expand = savedInstanceState.getBoolean(APP_BAR_EXPANDED);
+            appbar.setExpanded(expand, false);
+        }
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        boolean expanded = appbar.getBottom() >= scrimHeightTrigger;
+
+        outState.putBoolean(APP_BAR_EXPANDED, expanded);
+    }
+
+    public int getStatusBarHeight() {
+        int result = 0;
+        int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            result = getResources().getDimensionPixelSize(resourceId);
+        }
+        return result;
     }
 
     private void loadArticle() {
         getSupportLoaderManager().initLoader(0, null, this);
     }
 
-    @Override
-    public void onEnterAnimationComplete() {
-//        showFab();
-    }
-
     private void populateTitles(ArticleInfo articleInfo) {
         txtArticleTitle.setText(articleInfo.getTitle());
-        txtArticleByline.setText(ArticleUtils.dateFrom(articleInfo.getDate(), articleInfo.getAuthor()));
+        txtArticleByline.setText(ArticleUtils.dateFrom(articleInfo.getDate(), articleInfo.getAuthor(), true));
+
+        metaBar.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                metaBar.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+                scrimHeightTrigger = appbar.getTotalScrollRange() - (metaBar.getHeight() + getStatusBarHeight());
+
+                collapsingToolbar.setScrimVisibleHeightTrigger(scrimHeightTrigger);
+            }
+        });
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            // Respond to the action bar's Up/Home button
             case android.R.id.home:
                 supportFinishAfterTransition();
                 return true;
@@ -114,13 +149,14 @@ public class ArticleDetailActivity extends AppCompatActivity
     }
 
     private void setShareButton() {
-        findViewById(R.id.share_fab).setOnClickListener(new View.OnClickListener() {
+        shareFab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(Intent.createChooser(ShareCompat.IntentBuilder.from(ArticleDetailActivity.this)
-                        .setType("text/plain")
-                        .setText("Some sample text")
-                        .getIntent(), getString(R.string.action_share)));
+                startActivity(Intent.createChooser(
+                        ShareCompat.IntentBuilder.from(ArticleDetailActivity.this)
+                                .setType("text/plain")
+                                .setText("Some sample text")
+                                .getIntent(), getString(R.string.action_share)));
             }
         });
     }
@@ -141,21 +177,18 @@ public class ArticleDetailActivity extends AppCompatActivity
                         public void onSuccess() {
                             Bitmap bitmap = ((BitmapDrawable) imgThumbnail.getDrawable()).getBitmap();
                             setToolbarColor(bitmap);
-
                             supportStartPostponedEnterTransition();
-//                            scheduleStartPostponedTransition(imgThumbnail);
                         }
 
                         @Override
                         public void onError() {
                             supportStartPostponedEnterTransition();
-//                            scheduleStartPostponedTransition(imgThumbnail);
                         }
                     });
         }
     }
 
-    private void showFab() {
+    private void showShareFab() {
         shareFab.animate()
                 .alpha(1)
                 .scaleX(1)
@@ -167,17 +200,15 @@ public class ArticleDetailActivity extends AppCompatActivity
     public void setToolbarColor(Bitmap bitmap) {
         Palette.from(bitmap).generate(new Palette.PaletteAsyncListener() {
             public void onGenerated(@NonNull Palette p) {
-                CollapsingToolbarLayout collapsingToolbar = findViewById(R.id.collapsingToolbar);
-                FloatingActionButton fab = findViewById(R.id.share_fab);
+                Context context = ArticleDetailActivity.this;
 
-                int backgroundColor = ContextCompat.getColor(ArticleDetailActivity.this, R.color.theme_primary);
-                int statusBarColor = ContextCompat.getColor(ArticleDetailActivity.this, android.R.color.transparent);
-                int fabColor = ContextCompat.getColor(ArticleDetailActivity.this, R.color.theme_accent);
+                int backgroundColor = ContextCompat.getColor(context, R.color.theme_primary);
+                int statusBarColor = ContextCompat.getColor(context, android.R.color.transparent);
+                int fabColor = ContextCompat.getColor(context, R.color.theme_accent);
 
                 collapsingToolbar.setBackgroundColor(backgroundColor);
 
                 backgroundColor = p.getMutedColor(backgroundColor);
-//                statusBarColor = p.getDarkMutedColor(statusBarColor);
                 fabColor = p.getLightVibrantColor(fabColor);
 
                 collapsingToolbar.setBackgroundColor(backgroundColor);
@@ -189,7 +220,7 @@ public class ArticleDetailActivity extends AppCompatActivity
                     getWindow().setStatusBarColor(statusBarColor);
                 }
 
-                fab.setBackgroundTintList(ColorStateList.valueOf(fabColor));
+                shareFab.setBackgroundTintList(ColorStateList.valueOf(fabColor));
             }
         });
     }
@@ -234,15 +265,13 @@ public class ArticleDetailActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> cursorLoader, Cursor cursor) {
-        showFab();
-//        String body = "N/A";
+        showShareFab();
+
         String[] paragraphs = new String[]{ "N/A" };
 
         mCursor = cursor;
         if (mCursor != null && mCursor.moveToFirst()) {
             paragraphs = mCursor.getString(ArticleLoader.Query.BODY).split("(\r\n\r\n)|(\n\n)");
-//            body = mCursor.getString(ArticleLoader.Query.BODY)
-//                    .replaceAll("(\r\n|\n)", "<br />");
         } else {
             if (mCursor != null) {
                 mCursor.close();
@@ -257,7 +286,41 @@ public class ArticleDetailActivity extends AppCompatActivity
         } else {
             recyclerView.setAdapter(new ArticleParagraphAdapter(this, paragraphs));
             recyclerView.setLayoutManager(new LinearLayoutManager(this));
+
+            setUpButton();
         }
+    }
+
+    private void setUpButton() {
+        upFab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                appbar.setExpanded(true);
+                recyclerView.smoothScrollToPosition(0);
+            }
+        });
+
+        appbar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                if (Math.abs(verticalOffset) - appBarLayout.getTotalScrollRange() == 0) {
+                    upFab.animate()
+                            .alpha(1)
+                            .translationY(0)
+                            .setInterpolator(new DecelerateInterpolator())
+                            .start();
+
+                } else {
+                    float translationY = getResources().getDimension(R.dimen.up_fab_translationY);
+
+                    upFab.animate()
+                            .alpha(0)
+                            .translationY(translationY)
+                            .setInterpolator(new AccelerateInterpolator())
+                            .start();
+                }
+            }
+        });
     }
 
     @Override

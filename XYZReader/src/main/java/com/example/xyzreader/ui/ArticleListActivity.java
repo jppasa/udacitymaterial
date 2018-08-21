@@ -47,7 +47,7 @@ public class ArticleListActivity extends AppCompatActivity implements
     private static final int LOADER_ID = 0;
 
     @BindView(R.id.swipe_refresh_layout) SwipeRefreshLayout mSwipeRefreshLayout;
-    @BindView(R.id.recycler_view) private RecyclerView mRecyclerView;
+    @BindView(R.id.recycler_view) RecyclerView mRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -41,7 +41,7 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHold
         final ArticleInfo articleInfo = ArticleUtils.retrieveArticle(mCursor, position);
 
         holder.titleView.setText(articleInfo.getTitle());
-        holder.subtitleView.setText(ArticleUtils.dateFrom(articleInfo.getDate(), articleInfo.getAuthor()));
+        holder.subtitleView.setText(ArticleUtils.dateFrom(articleInfo.getDate(), articleInfo.getAuthor(), false));
 
         Picasso.with(mContext)
                 .load(articleInfo.getThumbnailUrl())

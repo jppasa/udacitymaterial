@@ -10,4 +10,6 @@
 
     <dimen name="card_default_negative_margin">-2dp</dimen>
     <dimen name="detail_text_horiz_margin">16dp</dimen>
+    <dimen name="up_fab_translationY">56dp</dimen>
+    <dimen name="app_bar_height">256dp</dimen>
 </resources>

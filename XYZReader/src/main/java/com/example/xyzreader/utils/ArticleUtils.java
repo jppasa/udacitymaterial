@@ -47,24 +47,23 @@ public class ArticleUtils {
         }
     }
 
-    public static Spanned dateFrom(Date publishedDate, String author) {
+    public static Spanned dateFrom(Date publishedDate, String author, boolean dark) {
+
+        String dateStr;
+
         if (!publishedDate.before(START_OF_EPOCH.getTime())) {
-            return Html.fromHtml(
-                    DateUtils.getRelativeTimeSpanString(
-                            publishedDate.getTime(),
-                            System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
-                            DateUtils.FORMAT_ABBREV_ALL).toString()
-                            + " by <font color='#ffffff'>"
-                            + author
-                            + "</font>");
-
+            dateStr = DateUtils.getRelativeTimeSpanString(
+                    publishedDate.getTime(),
+                    System.currentTimeMillis(), DateUtils.HOUR_IN_MILLIS,
+                    DateUtils.FORMAT_ABBREV_ALL).toString();
         } else {
-            // If date is before 1902, just show the string
-            return Html.fromHtml(
-                    outputFormat.format(publishedDate) + " by <font color='#ffffff'>"
-                            + author
-                            + "</font>");
+            dateStr = outputFormat.format(publishedDate);
+        }
 
+        if (dark) {
+            return Html.fromHtml(dateStr + " by <font color='#ffffff'>" + author + "</font>");
+        } else {
+            return Html.fromHtml(dateStr + "<br/>" + " by " + author);
         }
     }
 }
