@@ -12,6 +12,7 @@
     <string name="transition_title" translatable="false">transition_title</string>
     <string name="transition_subtitle" translatable="false">transition_subtitle</string>
     <string name="transition_thumbnail" translatable="false">transition_thumbnail</string>
+
     <string name="article_thumbnail">Article thumbnail</string>
     <string name="lorem_ipsum" translatable="false">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Proin consequat odio eu nisi semper dignissim. Donec varius dapibus tempor. Phasellus id est nunc. Proin posuere nisl id tellus dapibus, ut tristique sapien hendrerit. Nulla suscipit sapien ac aliquet sagittis. Suspendisse condimentum sed ligula quis blandit. Donec bibendum luctus ante, ut tincidunt nunc lacinia nec. Proin sit amet finibus elit, nec vulputate augue. In dictum interdum ex, ac dictum velit dignissim ac.
 

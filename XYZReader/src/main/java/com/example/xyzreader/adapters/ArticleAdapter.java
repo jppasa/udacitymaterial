@@ -37,7 +37,7 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHold
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(@NonNull final ViewHolder holder, int position) {
         final ArticleInfo articleInfo = ArticleUtils.retrieveArticle(mCursor, position);
 
         holder.titleView.setText(articleInfo.getTitle());
@@ -47,20 +47,11 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHold
                 .load(articleInfo.getThumbnailUrl())
                 .into(holder.thumbnailView);
 
-        final int finalPosition = position;
-        final ImageView finalThumbnail = holder.thumbnailView;
-        final TextView finalTitle = holder.titleView;
-        final TextView finalSubtitle = holder.subtitleView;
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (mArticleClickListener != null) {
-                    mArticleClickListener.onArticleClicked(
-                            finalThumbnail,
-                            finalTitle,
-                            finalSubtitle,
-                            finalPosition,
-                            articleInfo);
+                    mArticleClickListener.onArticleClicked(holder.itemView, articleInfo);
                 }
             }
         });
@@ -90,10 +81,6 @@ public class ArticleAdapter extends RecyclerView.Adapter<ArticleAdapter.ViewHold
     }
 
     public interface ArticleClickListener {
-        void onArticleClicked(ImageView imageView,
-                              TextView titleView,
-                              TextView subtitleView,
-                              int position,
-                              ArticleInfo articleInfo);
+        void onArticleClicked(View itemView, ArticleInfo articleInfo);
     }
 }

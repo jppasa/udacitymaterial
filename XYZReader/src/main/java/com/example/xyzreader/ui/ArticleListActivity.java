@@ -20,8 +20,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.view.View;
 import android.view.Window;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.example.xyzreader.R;
 import com.example.xyzreader.adapters.ArticleAdapter;
@@ -139,17 +137,17 @@ public class ArticleListActivity extends AppCompatActivity implements
     }
 
     @Override
-    public void onArticleClicked(ImageView imageView, TextView titleView, TextView subtitleView, int position, ArticleInfo articleInfo) {
-        launchDetailActivity(articleInfo, imageView, titleView, subtitleView);
+    public void onArticleClicked(View view, ArticleInfo articleInfo) {
+        View thumbnailView = view.findViewById(R.id.thumbnail);
+
+        launchDetailActivity(articleInfo, thumbnailView);
     }
 
-    private void launchDetailActivity(ArticleInfo articleInfo, ImageView thumbnailView, TextView titleView, TextView subtitleView) {
+    private void launchDetailActivity(ArticleInfo articleInfo, View thumbnail) {
 
         Uri uri = ItemsContract.Items.buildItemUri(articleInfo.getId());
 
         String thumbnailTransition = getString(R.string.transition_thumbnail);
-        String titleTransition = getString(R.string.transition_title);
-        String subtitleTransition = getString(R.string.transition_subtitle);
 
         Intent intent = new Intent(Intent.ACTION_VIEW, uri);
         intent.putExtra(ArticleDetailActivity.EXTRA_ARTICLE, articleInfo);
@@ -164,9 +162,7 @@ public class ArticleListActivity extends AppCompatActivity implements
             }
         }
 
-        pairs.add(Pair.create((View) thumbnailView, thumbnailTransition));
-        pairs.add(Pair.create((View) titleView, titleTransition));
-        pairs.add(Pair.create((View) subtitleView, subtitleTransition));
+        pairs.add(Pair.create(thumbnail, thumbnailTransition));
 
         ActivityOptionsCompat options =
                 ActivityOptionsCompat.makeSceneTransitionAnimation(this,

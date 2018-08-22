@@ -1,9 +1,11 @@
 package com.example.xyzreader.ui;
 
 import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.ColorStateList;
+import android.content.res.Resources;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
@@ -21,8 +23,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewPropertyAnimator;
 import android.view.ViewTreeObserver;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
@@ -50,10 +57,13 @@ public class ArticleDetailActivity extends AppCompatActivity
     public static final String EXTRA_ARTICLE = "extra_article";
     public static final String EXTRA_PHOTO = "extra_photo";
     private static final String APP_BAR_EXPANDED = "app_bar_expanded";
+    private static final float SUPPOSED_ACTION_BAR_HEIGHT_DP = 56f;
+
     private ArticleInfo articleInfo;
 
     @BindView(R.id.appbar) AppBarLayout appbar;
     @BindView(R.id.collapsingToolbar) CollapsingToolbarLayout collapsingToolbar;
+    @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.meta_bar) LinearLayout metaBar;
     @BindView(R.id.imgThumbnail) ImageView imgThumbnail;
     @BindView(R.id.txtArticleTitle) TextView txtArticleTitle;
@@ -64,6 +74,8 @@ public class ArticleDetailActivity extends AppCompatActivity
 
     private Cursor mCursor;
     private int scrimHeightTrigger;
+    private ViewPropertyAnimator mShowToolbarAnimation;
+    private ViewPropertyAnimator mHideToolbarAnimation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +89,9 @@ public class ArticleDetailActivity extends AppCompatActivity
 
         setContentView(R.layout.activity_article_detail);
         ButterKnife.bind(this);
+
+        setSupportActionBar(toolbar);
+        toolbar.setTitle(" ");
 
         Bundle extras = getIntent().getExtras();
         if (extras != null && extras.containsKey(EXTRA_ARTICLE)) {
@@ -96,6 +111,7 @@ public class ArticleDetailActivity extends AppCompatActivity
         if (savedInstanceState != null) {
             boolean expand = savedInstanceState.getBoolean(APP_BAR_EXPANDED);
             appbar.setExpanded(expand, false);
+            onEnterAnimationComplete();
         }
     }
 
@@ -135,14 +151,88 @@ public class ArticleDetailActivity extends AppCompatActivity
                 collapsingToolbar.setScrimVisibleHeightTrigger(scrimHeightTrigger);
             }
         });
+
+        final int actionBarSize = getActionBarSize();
+        appbar.addOnOffsetChangedListener(new AppBarLayout.OnOffsetChangedListener() {
+            @Override
+            public void onOffsetChanged(AppBarLayout appBarLayout, int verticalOffset) {
+                if (actionBarSize > 0) {
+                    int scroll = appBarLayout.getTotalScrollRange() + verticalOffset;
+
+                    Log.d("TOOLBAR_ANIMATION", scroll + " <= " + actionBarSize);
+
+                    if (scroll <= actionBarSize) {
+                        hideToolbar();
+                    } else {
+                        showToolbar();
+                    }
+                }
+            }
+        });
     }
 
+    private void hideToolbar() {
+        if (mHideToolbarAnimation == null) {
+            mHideToolbarAnimation = toolbar.animate()
+                    .alpha(0)
+                    .setDuration(200)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+                            mShowToolbarAnimation = null;
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            mHideToolbarAnimation = null;
+                        }
+                    });
+            mHideToolbarAnimation.start();
+        }
+    }
+
+    private void showToolbar() {
+        if (mShowToolbarAnimation == null) {
+            mShowToolbarAnimation = toolbar.animate()
+                    .alpha(1)
+                    .setDuration(200)
+                    .setInterpolator(new AccelerateInterpolator())
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationStart(Animator animation) {
+                            mHideToolbarAnimation = null;
+                        }
+
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            mShowToolbarAnimation = null;
+                        }
+                    });
+            mShowToolbarAnimation.start();
+        }
+    }
+
+    private int getActionBarSize() {
+        TypedValue tv = new TypedValue();
+        if (getTheme().resolveAttribute(android.R.attr.actionBarSize, tv, true)) {
+            return TypedValue.complexToDimensionPixelSize(tv.data,getResources().getDisplayMetrics());
+        }
+
+        return (int) dpToPixel(SUPPOSED_ACTION_BAR_HEIGHT_DP);
+    }
+
+    private float dpToPixel(float dp){
+        Resources resources = getResources();
+        DisplayMetrics metrics = resources.getDisplayMetrics();
+        return dp * ((float)metrics.densityDpi / DisplayMetrics.DENSITY_DEFAULT);
+    }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case android.R.id.home:
-                supportFinishAfterTransition();
+                onBackPressed();
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -194,6 +284,7 @@ public class ArticleDetailActivity extends AppCompatActivity
                 .scaleX(1)
                 .scaleY(1)
                 .setInterpolator(new DecelerateInterpolator())
+                .setStartDelay(500)
                 .start();
     }
 
@@ -226,35 +317,15 @@ public class ArticleDetailActivity extends AppCompatActivity
     }
 
     @Override
+    public void onEnterAnimationComplete() {
+        metaBar.animate().alpha(1).setStartDelay(250).start();
+        showShareFab();
+    }
+
+    @Override
     public void onBackPressed() {
         supportFinishAfterTransition();
-        shareFab.animate()
-                .alpha(0)
-                .scaleX(0)
-                .scaleY(0)
-                .setInterpolator(new AccelerateInterpolator())
-                .setListener(new Animator.AnimatorListener() {
-                    @Override
-                    public void onAnimationStart(Animator animation) { }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        shareFab.setVisibility(View.GONE);
-                        ArticleDetailActivity.super.onBackPressed();
-                    }
-
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-                        shareFab.setVisibility(View.GONE);
-                        ArticleDetailActivity.super.onBackPressed();
-                    }
-
-                    @Override
-                    public void onAnimationRepeat(Animator animation) { }
-                })
-                .start();
-
-//        super.onBackPressed();
+        shareFab.setVisibility(View.GONE);
     }
 
     @NonNull
@@ -265,7 +336,7 @@ public class ArticleDetailActivity extends AppCompatActivity
 
     @Override
     public void onLoadFinished(@NonNull Loader<Cursor> cursorLoader, Cursor cursor) {
-        showShareFab();
+        onEnterAnimationComplete();
 
         String[] paragraphs = new String[]{ "N/A" };
 
@@ -327,5 +398,4 @@ public class ArticleDetailActivity extends AppCompatActivity
     public void onLoaderReset(@NonNull Loader<Cursor> cursorLoader) {
         mCursor = null;
     }
-
 }
